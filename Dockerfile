@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   sudo \
   cmake \
   graphviz \
+  rsync \
+  ssh \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -56,14 +58,19 @@ RUN mkdir -p $HOME \
   && chown -R devel:devel $HOME \
   && chown -R devel:devel $APP
 
+RUN echo "APP=${APP}" | sudo tee -a /etc/environment && \
+  echo "BUNDLE_APP_CONFIG=${BUNDLE_APP_CONFIG}" | sudo tee -a /etc/environment && \
+  echo "BUNDLE_PATH=${BUNDLE_PATH}" | sudo tee -a /etc/environment && \
+  echo "GEM_HOME=${GEM_HOME}" | sudo tee -a /etc/environment && \
+  echo "GEM_PATH=${GEM_PATH}" | sudo tee -a /etc/environment && \
+  echo "PATH=${PATH}" | sudo tee -a /etc/environment
+
 USER devel:devel
 WORKDIR $APP
 
 # Install bundler to user and update path
-RUN gem update --system \
-  && gem install bundler -v 1.17.3 \
-  && gem install rails -v 4.2.11.1 \
-  && bundle config --global jobs $(nproc)
+RUN gem install bundler -v 1.17.3 \
+  && gem install rails -v 4.2.11.1
 
 # Copy the Gemfile as well as the Gemfile.lock and install
 # the RubyGems. This is a separate step so the dependencies
