@@ -1,4 +1,4 @@
-FROM ruby:2.4.6
+FROM ruby:2.6.2
 MAINTAINER fabiosammy <fabiosammy@gmail.com>
 
 # Install apt based dependencies required to run Rails as
@@ -70,7 +70,9 @@ WORKDIR $APP
 
 # Install bundler to user and update path
 RUN gem install bundler -v 1.17.3 \
-  && gem install rails -v 4.2.11.1
+  && gem install rails -v 5.2.3 \
+  && rails new ~/my-app \
+  && rm -rf ~/my-app
 
 # Copy the Gemfile as well as the Gemfile.lock and install
 # the RubyGems. This is a separate step so the dependencies
