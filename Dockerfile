@@ -70,7 +70,9 @@ WORKDIR $APP
 
 # Install bundler to user and update path
 RUN gem install bundler -v 1.17.3 \
-  && gem install rails -v 4.2.11.1
+  && gem install rails -v 4.2.11.1 \
+  && rails new ~/my-app \
+  && rm -rf ~/my-app
 
 # Copy the Gemfile as well as the Gemfile.lock and install
 # the RubyGems. This is a separate step so the dependencies
