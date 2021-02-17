@@ -1,23 +1,45 @@
-FROM ruby:2.4.6
-MAINTAINER fabiosammy <fabiosammy@gmail.com>
+FROM ruby:2.7.2
+LABEL maintainer="fabiosammy@gmail.com"
+
+# Set the libs versions
+ENV BUNDLER_VERSION=2.2.10 \
+  CMAKE_VERSION=3.13.4-1 \
+  LINUX_CODENAME=buster \
+  MARIADB_CLIENT_VERSION=10.3 \
+  NODEJS_REPO=node_14.x \
+  NODEJS_VERSION=14.15.5-1nodesource1 \
+  POSTGRES_CLIENT_VERSION=11 \
+  RAILS_VERSION=6.1.2.1 \
+  YARN_VERSION=1.22.5-1
 
 # Install apt based dependencies required to run Rails as
 # well as RubyGems. As the Ruby image itself is based on a
 # Debian image, we use apt-get to install those.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  build-essential \
-  openssh-server \
   bison \
-  libgdbm-dev \
-  ruby \
-  locales \
-  mysql-client \
-  postgresql-client \
-  sqlite3 \
-  nodejs \
-  sudo \
-  cmake \
+  build-essential \
+  ca-certificates \
+  cmake=${CMAKE_VERSION} \
   graphviz \
+  libgdbm-dev \
+  locales \
+  mariadb-client-${MARIADB_CLIENT_VERSION} \
+  openssh-server \
+  rsync \
+  sqlite3 \
+  ssh \
+  sudo \
+  && curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
+  && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+  && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+  && echo "deb https://deb.nodesource.com/${NODEJS_REPO} ${LINUX_CODENAME} main" | tee -a /etc/apt/sources.list.d/nodesource.list \
+  && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee -a /etc/apt/sources.list.d/yarn.list \
+  && echo "deb http://apt.postgresql.org/pub/repos/apt/ ${LINUX_CODENAME}-pgdg main" | tee -a /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends \
+  nodejs=${NODEJS_VERSION} \
+  postgresql-client-${POSTGRES_CLIENT_VERSION} \
+  yarn=${YARN_VERSION} \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -29,7 +51,9 @@ ENV LANG=en_US.UTF-8 \
   LC_ALL=en_US.UTF-8
 
 # skip installing gem documentation
-RUN chmod 777 /usr/local/bundle && mkdir -p /usr/local/etc && { echo 'install: --no-document'; echo 'update: --no-document'; } >> /usr/local/etc/gemrc
+RUN chmod 777 /usr/local/bundle \
+  && mkdir -p /usr/local/etc \
+  && { echo 'install: --no-document'; echo 'update: --no-document'; } >> /usr/local/etc/gemrc
 
 # SSH config
 RUN mkdir /var/run/sshd \
@@ -56,14 +80,21 @@ RUN mkdir -p $HOME \
   && chown -R devel:devel $HOME \
   && chown -R devel:devel $APP
 
+RUN echo "APP=${APP}" | sudo tee -a /etc/environment && \
+  echo "BUNDLE_APP_CONFIG=${BUNDLE_APP_CONFIG}" | sudo tee -a /etc/environment && \
+  echo "BUNDLE_PATH=${BUNDLE_PATH}" | sudo tee -a /etc/environment && \
+  echo "GEM_HOME=${GEM_HOME}" | sudo tee -a /etc/environment && \
+  echo "GEM_PATH=${GEM_PATH}" | sudo tee -a /etc/environment && \
+  echo "PATH=${PATH}" | sudo tee -a /etc/environment
+
 USER devel:devel
 WORKDIR $APP
 
 # Install bundler to user and update path
-RUN gem update --system \
-  && gem install bundler -v 1.17.3 \
-  && gem install rails -v 4.2.11.1 \
-  && bundle config --global jobs $(nproc)
+RUN gem install bundler -v ${BUNDLER_VERSION} \
+  && gem install rails -v ${RAILS_VERSION} \
+  && rails new ~/my-app \
+  && rm -rf ~/my-app
 
 # Copy the Gemfile as well as the Gemfile.lock and install
 # the RubyGems. This is a separate step so the dependencies
