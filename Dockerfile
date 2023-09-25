@@ -1,16 +1,15 @@
-FROM ruby:2.7.2
+FROM ruby:3.2.2
 LABEL maintainer="fabiosammy@gmail.com"
 
 # Set the libs versions
-ENV BUNDLER_VERSION=2.2.10 \
-  CMAKE_VERSION=3.13.4-1 \
-  LINUX_CODENAME=buster \
-  MARIADB_CLIENT_VERSION=10.3 \
-  NODEJS_REPO=node_14.x \
-  NODEJS_VERSION=14.15.5-1nodesource1 \
-  POSTGRES_CLIENT_VERSION=11 \
-  RAILS_VERSION=6.1.2.1 \
-  YARN_VERSION=1.22.5-1
+ENV BUNDLER_VERSION=2.4.19 \
+  CMAKE_VERSION=3.25.1-1 \
+  LINUX_CODENAME=bullseye \
+  NODEJS_REPO=node_18.x \
+  NODEJS_VERSION=18.17.1-deb-1nodesource1 \
+  POSTGRES_CLIENT_VERSION=15 \
+  RAILS_VERSION=7.0.8 \
+  YARN_VERSION=1.22.19-1
 
 # Install apt based dependencies required to run Rails as
 # well as RubyGems. As the Ruby image itself is based on a
@@ -23,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   graphviz \
   libgdbm-dev \
   locales \
-  mariadb-client-${MARIADB_CLIENT_VERSION} \
+  mariadb-client \
   openssh-server \
   rsync \
   sqlite3 \
@@ -31,10 +30,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   sudo \
   && curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
   && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-  && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+  # && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
   && echo "deb https://deb.nodesource.com/${NODEJS_REPO} ${LINUX_CODENAME} main" | tee -a /etc/apt/sources.list.d/nodesource.list \
   && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee -a /etc/apt/sources.list.d/yarn.list \
-  && echo "deb http://apt.postgresql.org/pub/repos/apt/ ${LINUX_CODENAME}-pgdg main" | tee -a /etc/apt/sources.list.d/pgdg.list \
+  # && echo "deb http://apt.postgresql.org/pub/repos/apt/ ${LINUX_CODENAME}-pgdg main" | tee -a /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
   nodejs=${NODEJS_VERSION} \
